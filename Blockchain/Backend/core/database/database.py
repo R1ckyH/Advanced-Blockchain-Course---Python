@@ -27,7 +27,7 @@ class BaseDB:
         return data
 
     def update(self, data):
-        with open(self.filepath,'w+') as f:
+        with open(self.filepath, 'w+') as f:
             f.write(json.dumps(data))
         return True
 
@@ -49,9 +49,10 @@ class BlockchainDB(BaseDB):
 
     def lastBlock(self):
         data = self.read()
-
         if data:
             return data[-1]
+        else:
+            return {"BlockHeader": {"blockHash": "0000bbe173a3c36eabec25b0574bf7b055db9861b07f9ee10ad796eb06428b9b"}}
 
 
 class AccountDB(BaseDB):
