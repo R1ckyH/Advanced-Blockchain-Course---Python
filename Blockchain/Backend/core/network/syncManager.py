@@ -143,10 +143,12 @@ class syncManager:
 
     def startDownload(self, localport, port, bindPort):
         lastBlock = BlockchainDB().lastBlock()
+
         if not lastBlock:
             lastBlockHeader = "0000bbe173a3c36eabec25b0574bf7b055db9861b07f9ee10ad796eb06428b9b"
         else:
             lastBlockHeader = lastBlock['BlockHeader']['blockHash']
+
         startBlock = bytes.fromhex(lastBlockHeader)
 
         getHeaders = requestBlock(startBlock=startBlock)
@@ -155,7 +157,6 @@ class syncManager:
 
         while True:
             envelope = NetworkEnvelope.parse(self.stream)
-            print(envelope.command)
             if envelope.command == b"Finished":
                 blockObj = FinishedSending.parse(envelope.stream())
                 print(f"All Blocks Received")
@@ -179,6 +180,7 @@ class syncManager:
                                              blockObj.BlockHeader.timestamp,
                                              blockObj.BlockHeader.bits,
                                              blockObj.BlockHeader.nonce)
+
                 if BlockHeaderObj.validateBlock():
                     for idx, tx in enumerate(blockObj.Txs):
                         tx.TxId = tx.id()
