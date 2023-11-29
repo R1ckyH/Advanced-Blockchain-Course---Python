@@ -23,7 +23,9 @@ import time
 ZERO_HASH = "0" * 64
 VERSION = 1
 INITIAL_TARGET = 0x0000FFFF00000000000000000000000000000000000000000000000000000000
-MAX_TARGET     = 0x0000ffff00000000000000000000000000000000000000000000000000000000
+MAX_TARGET = 0x0000ffff00000000000000000000000000000000000000000000000000000000
+localHostPort = None
+localHost = None
 
 """
 # Calculate new Target to keep our Block mine time under 20 seconds
@@ -32,6 +34,7 @@ MAX_TARGET     = 0x0000ffff00000000000000000000000000000000000000000000000000000
 AVERAGE_BLOCK_MINE_TIME = 20
 RESET_DIFFICULTY_AFTER_BLOCKS = 10
 AVERAGE_MINE_TIME = AVERAGE_BLOCK_MINE_TIME * RESET_DIFFICULTY_AFTER_BLOCKS
+
 
 class Blockchain:
     def __init__(self, utxos, MemPool, newBlockAvailable, secondryChain):
@@ -56,27 +59,39 @@ class Blockchain:
         self.addBlock(BlockHeight, prevBlockHash)
 
     """ Start the Sync Node """
-    def startSync(self, block = None):
+
+    def startSync(self, block=None, local_port=None, local_host=None):
+        global localHostPort, localHost
+        if localHostPort is None: #inject
+            localHostPort = local_port
+        if localHost is None: #inject
+            localHost = local_host
         try:
+            print("sync")
             node = NodeDB()
             portList = node.read()
 
             for port in portList:
                 if localHostPort != port:
-                    sync = syncManager(localHost, port, secondryChain = self.secondryChain)
+                    sync = syncManager(localHost, port, secondryChain=self.secondryChain)
                     try:
                         if block:
-                            sync.publishBlock(localHostPort - 1, port, block) 
-                        else:                    
+                            sync.publishBlock(localHostPort - 1, port, block)
+                        else:
                             sync.startDownload(localHostPort - 1, port, True)
-                  
+
                     except Exception as err:
+                        print(f"port: {port} connection failed")
                         pass
-                    
+
         except Exception as err:
+            import traceback
+            for line in traceback.format_exc().splitlines():
+                print(line)
             pass
-       
+
     """ Keep Track of all the unspent Transaction in cache memory for fast retrival"""
+
     def store_uxtos_in_cache(self):
         for tx in self.addTransactionsInBlock:
             print(f"Transaction added {tx.TxId} ")
@@ -94,8 +109,9 @@ class Blockchain:
                     self.utxos[txId_index[0].hex()] = prev_trans.tx_outs.pop(
                         txId_index[1]
                     )
-                    
+
     """ Check if it is a double spending Attempt """
+
     def doubleSpendingAttempt(self, tx):
         for txin in tx.tx_ins:
             if txin.prev_tx not in self.prevTxs and txin.prev_tx.hex() in self.utxos:
@@ -104,6 +120,7 @@ class Blockchain:
                 return True
 
     """ Read Transactions from Memory Pool"""
+
     def read_transaction_from_memorypool(self):
         self.Blocksize = 80
         self.TxIds = []
@@ -113,7 +130,7 @@ class Blockchain:
         deleteTxs = []
 
         tempMemPool = dict(self.MemPool)
-        
+
         if self.Blocksize < 1000000:
             for tx in tempMemPool:
                 if not self.doubleSpendingAttempt(tempMemPool[tx]):
@@ -126,12 +143,12 @@ class Blockchain:
                         self.remove_spent_transactions.append([spent.prev_tx, spent.prev_index])
                 else:
                     deleteTxs.append(tx)
-        
+
         for txId in deleteTxs:
             del self.MemPool[txId]
 
-           
     """ Remove Transactions from Memory pool """
+
     def remove_transactions_from_memorypool(self):
         for tx in self.TxIds:
             if tx.hex() in self.MemPool:
@@ -166,7 +183,7 @@ class Blockchain:
         for block in blocks:
             for tx in block['Txs']:
                 allTxs[tx['TxId']] = tx
-            
+
         for block in blocks:
             for tx in block['Txs']:
                 for txin in tx['tx_ins']:
@@ -176,17 +193,16 @@ class Blockchain:
                         else:
                             txOut = allTxs[txin['prev_tx']]['tx_outs']
                             txOut.pop(txin['prev_index'])
-        
+
         for tx in allTxs:
             self.utxos[tx] = Tx.to_obj(allTxs[tx])
-
 
     def settargetWhileBooting(self):
         bits, timestamp = self.getTargetDifficultyAndTimestamp()
         self.bits = bytes.fromhex(bits)
         self.current_target = bits_to_target(self.bits)
 
-    def getTargetDifficultyAndTimestamp(self, BlockHeight = None):
+    def getTargetDifficultyAndTimestamp(self, BlockHeight=None):
         if BlockHeight:
             blocks = BlockchainDB().read()
             bits = blocks[BlockHeight]['BlockHeader']['bits']
@@ -196,7 +212,6 @@ class Blockchain:
             bits = block['BlockHeader']['bits']
             timestamp = block['BlockHeader']['timestamp']
         return bits, timestamp
-
 
     def adjustTargetDifficulty(self, BlockHeight):
         if BlockHeight % 10 == 0:
@@ -211,12 +226,12 @@ class Blockchain:
 
             if NEW_TARGET > MAX_TARGET:
                 NEW_TARGET = MAX_TARGET
-            
+
             self.bits = target_to_bits(NEW_TARGET)
             self.current_target = NEW_TARGET
 
-    def BroadcastBlock(self, block):
-        self.startSync(block)
+    def BroadcastBlock(self, block, local_port, local_host):
+        self.startSync(block, local_port, local_host)
 
     def LostCompetition(self):
         deleteBlock = []
@@ -225,13 +240,13 @@ class Blockchain:
         for newblock in tempBlocks:
             block = tempBlocks[newblock]
             deleteBlock.append(newblock)
-        
+
             BlockHeaderObj = BlockHeader(block.BlockHeader.version,
-                                block.BlockHeader.prevBlockHash, 
-                                block.BlockHeader.merkleRoot, 
-                                block.BlockHeader.timestamp,
-                                block.BlockHeader.bits,
-                                block.BlockHeader.nonce)
+                                         block.BlockHeader.prevBlockHash,
+                                         block.BlockHeader.merkleRoot,
+                                         block.BlockHeader.timestamp,
+                                         block.BlockHeader.bits,
+                                         block.BlockHeader.nonce)
 
             if BlockHeaderObj.validateBlock():
                 for idx, tx in enumerate(block.Txs):
@@ -247,7 +262,7 @@ class Blockchain:
                         del self.MemPool[tx.id()]
 
                     block.Txs[idx] = tx.to_dict()
-                    
+
                 block.BlockHeader.to_hex()
                 BlockchainDB().write([block.to_dict()])
             else:
@@ -265,7 +280,7 @@ class Blockchain:
                             addBlocks.append(self.secondryChain[prevBlockhash])
                             prevBlockhash = self.secondryChain[prevBlockhash].BlockHeader.prevBlockHash.hex()
                         count += 1
-                    
+
                     blockchain = BlockchainDB().read()
                     lastValidBlock = blockchain[-len(addBlocks)]
 
@@ -278,11 +293,12 @@ class Blockchain:
                                     del self.utxos[tx['TxId']]
 
                                     """ Don't Include COINBASE TX because it didn't come from MEMPOOL"""
-                                    if tx['tx_ins'][0]['prev_tx'] != "0000000000000000000000000000000000000000000000000000000000000000":
+                                    if tx['tx_ins'][0][
+                                        'prev_tx'] != "0000000000000000000000000000000000000000000000000000000000000000":
                                         orphanTxs[tx['TxId']] = tx
 
                         BlockchainDB().update(blockchain)
-                        
+
                         for Bobj in addBlocks[::-1]:
                             validBlock = copy.deepcopy(Bobj)
                             validBlock.BlockHeader.to_hex()
@@ -295,14 +311,15 @@ class Blockchain:
                                 for txin in tx.tx_ins:
                                     if txin.prev_tx.hex() in self.utxos:
                                         del self.utxos[txin.prev_tx.hex()]
-                                
-                                if tx.tx_ins[0].prev_tx.hex() != "0000000000000000000000000000000000000000000000000000000000000000":
+
+                                if tx.tx_ins[
+                                    0].prev_tx.hex() != "0000000000000000000000000000000000000000000000000000000000000000":
                                     validTxs[validBlock.Txs[index].TxId] = tx
 
                                 validBlock.Txs[index] = tx.to_dict()
-                            
+
                             BlockchainDB().write([validBlock.to_dict()])
-                        
+
                         """ Add Transactoins Back to MemPool """
                         for TxId in orphanTxs:
                             if TxId not in validTxs:
@@ -310,7 +327,6 @@ class Blockchain:
 
                 self.secondryChain[newblock] = block
 
-        
         for blockHash in deleteBlock:
             del self.newBlockAvailable[blockHash]
 
@@ -330,7 +346,7 @@ class Blockchain:
         merkleRoot = merkle_root(self.TxIds)[::-1].hex()
         self.adjustTargetDifficulty(BlockHeight)
         blockheader = BlockHeader(
-            VERSION, prevBlockHash, merkleRoot, timestamp, self.bits, nonce = 0
+            VERSION, prevBlockHash, merkleRoot, timestamp, self.bits, nonce=0
         )
         competitionOver = blockheader.mine(self.current_target, self.newBlockAvailable)
 
@@ -338,10 +354,10 @@ class Blockchain:
             self.LostCompetition()
         else:
             newBlock = Block(BlockHeight, self.Blocksize, blockheader, len(self.addTransactionsInBlock),
-                            self.addTransactionsInBlock)
+                             self.addTransactionsInBlock)
             blockheader.to_bytes()
             block = copy.deepcopy(newBlock)
-            broadcastNewBlock = Process(target = self.BroadcastBlock, args = (block, ))
+            broadcastNewBlock = Process(target=self.BroadcastBlock, args=(block, localHostPort, localHost))
             broadcastNewBlock.start()
             blockheader.to_hex()
             self.remove_spent_Transactions()
@@ -371,15 +387,15 @@ class Blockchain:
             print(f"Current Block Height is is {BlockHeight}")
             prevBlockHash = lastBlock["BlockHeader"]["blockHash"]
             self.addBlock(BlockHeight, prevBlockHash)
-            
+
+
 if __name__ == "__main__":
-    
     """ read configuration file """
     config = configparser.ConfigParser()
     config.read('config.ini')
     localHost = config['DEFAULT']['host']
     localHostPort = int(config['MINER']['port'])
-    simulateBTC = bool(config['MINER']['simulateBTC'])
+    simulateBTC = config['MINER'].getboolean('simulateBTC')
     webport = int(config['Webhost']['port'])
 
     with Manager() as manager:
@@ -387,13 +403,13 @@ if __name__ == "__main__":
         MemPool = manager.dict()
         newBlockAvailable = manager.dict()
         secondryChain = manager.dict()
-        
+
         webapp = Process(target=main, args=(utxos, MemPool, webport, localHostPort))
         webapp.start()
-        
+
         """ Start Server and Listen for miner requests """
         sync = syncManager(localHost, localHostPort, newBlockAvailable, secondryChain, MemPool)
-        startServer = Process(target = sync.spinUpTheServer)
+        startServer = Process(target=sync.spinUpTheServer)
         startServer.start()
 
         blockchain = Blockchain(utxos, MemPool, newBlockAvailable, secondryChain)
@@ -401,8 +417,9 @@ if __name__ == "__main__":
         blockchain.buildUTXOS()
 
         if simulateBTC:
-            autoBroadcastTxs = Process(target = autoBroadcast)
+            autoBroadcastTxs = Process(target=autoBroadcast)
             autoBroadcastTxs.start()
 
         blockchain.settargetWhileBooting()
+
         blockchain.main()
