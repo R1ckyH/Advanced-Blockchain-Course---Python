@@ -60,12 +60,12 @@ class BlockHeader:
     def mine(self, target, newBlockAvailable):
         self.blockHash = target + 1
         competitionOver = False
-
         while self.blockHash > target:
             if newBlockAvailable:
                 competitionOver = True
                 return competitionOver
 
+            self.nonce = random.randint(1, 2 ** 32)
             self.blockHash = little_endian_to_int(
                 hash256(
                     int_to_little_endian(self.version, 4)
@@ -76,11 +76,10 @@ class BlockHeader:
                     + int_to_little_endian(self.nonce, 4)
                 )
             )
-            self.nonce = random.randint(1, 2 ** 32)
             print(f"Mining Started {self.nonce}", end="\r")
         self.blockHash = int_to_little_endian(self.blockHash, 32).hex()[::-1]
-        self.nonce -= 1
         self.bits = self.bits.hex()
+        return competitionOver
 
     def validateBlock(self):
         lastBlock = BlockchainDB().lastBlock()
