@@ -6,13 +6,15 @@ from Blockchain.Backend.core.Tx import Tx
 from Blockchain.Backend.core.network.network import NetworkEnvelope, requestBlock, FinishedSending, portlist
 from threading import Thread
 
-from Blockchain.Backend.util.util import little_endian_to_int 
+from Blockchain.Backend.util.util import little_endian_to_int
+
+
 class syncManager:
-    def __init__(self, host, port, newBlockAvailable = None, secondryChain = None, Mempool = None):
+    def __init__(self, host, port, newBlockAvailable=None, secondryChain=None, Mempool=None):
         self.host = host
-        self.port = port 
+        self.port = port
         self.newBlockAvailable = newBlockAvailable
-        self.secondryChain = secondryChain
+        self.secondaryChain = secondryChain
         self.Mempool = Mempool
 
     def spinUpTheServer(self):
@@ -23,7 +25,7 @@ class syncManager:
 
         while True:
             self.conn, self.addr = self.server.acceptConnection()
-            handleConn = Thread(target = self.handleConnection)
+            handleConn = Thread(target=self.handleConnection)
             handleConn.start()
 
     def handleConnection(self):
@@ -31,7 +33,7 @@ class syncManager:
         try:
             if len(str(self.addr[1])) == 4:
                 self.addNode()
-            
+
             if envelope.command == b'Tx':
                 Transaction = Tx.parse(envelope.stream())
                 Transaction.TxId = Transaction.id()
@@ -40,12 +42,12 @@ class syncManager:
             if envelope.command == b'block':
                 blockObj = Block.parse(envelope.stream())
                 BlockHeaderObj = BlockHeader(blockObj.BlockHeader.version,
-                            blockObj.BlockHeader.prevBlockHash, 
-                            blockObj.BlockHeader.merkleRoot, 
-                            blockObj.BlockHeader.timestamp,
-                            blockObj.BlockHeader.bits,
-                            blockObj.BlockHeader.nonce)
-                
+                                             blockObj.BlockHeader.prevBlockHash,
+                                             blockObj.BlockHeader.merkleRoot,
+                                             blockObj.BlockHeader.timestamp,
+                                             blockObj.BlockHeader.bits,
+                                             blockObj.BlockHeader.nonce)
+
                 self.newBlockAvailable[BlockHeaderObj.generateBlockHash()] = blockObj
                 print(f"New Block Received : {blockObj.Height}")
 
@@ -53,7 +55,7 @@ class syncManager:
                 start_block, end_block = requestBlock.parse(envelope.stream())
                 self.sendBlockToRequestor(start_block)
                 print(f"Start Block is {start_block} \n End Block is {end_block}")
-            
+
             self.conn.close()
         except Exception as e:
             self.conn.close()
@@ -86,12 +88,11 @@ class syncManager:
         self.conn.sendall(envelope.serialize())
 
     def sendSecondryChain(self):
-        TempSecChain = dict(self.secondryChain)
-        
+        TempSecChain = dict(self.secondaryChain)
+
         for blockHash in TempSecChain:
             envelope = NetworkEnvelope(TempSecChain[blockHash].command, TempSecChain[blockHash].serialize())
             self.conn.sendall(envelope.serialize())
-
 
     def sendFinishedMessage(self):
         MessageFinish = FinishedSending()
@@ -112,18 +113,18 @@ class syncManager:
         blockchain = BlockchainDB()
         blocks = blockchain.read()
 
-        foundBlock = False 
+        foundBlock = False
         for block in blocks:
             if block['BlockHeader']['blockHash'] == fromBlocksOnwards:
                 foundBlock = True
                 continue
-        
+
             if foundBlock:
                 blocksToSend.append(block)
-        
+
         return blocksToSend
 
-    def connectToHost(self, localport, port, bindPort = None):
+    def connectToHost(self, localport, port, bindPort=None):
         self.connect = Node(self.host, port)
 
         if bindPort:
@@ -132,30 +133,29 @@ class syncManager:
             self.socket = self.connect.connect(localport)
 
         self.stream = self.socket.makefile('rb', None)
-    
+
     def publishBlock(self, localport, port, block):
         self.connectToHost(localport, port)
         self.connect.send(block)
 
     def publishTx(self, Tx):
         self.connect.send(Tx)
-     
-    def startDownload(self, localport,  port, bindPort):
-        lastBlock = BlockchainDB().lastBlock()
 
+    def startDownload(self, localport, port, bindPort):
+        lastBlock = BlockchainDB().lastBlock()
         if not lastBlock:
             lastBlockHeader = "0000bbe173a3c36eabec25b0574bf7b055db9861b07f9ee10ad796eb06428b9b"
         else:
             lastBlockHeader = lastBlock['BlockHeader']['blockHash']
-        
         startBlock = bytes.fromhex(lastBlockHeader)
 
         getHeaders = requestBlock(startBlock=startBlock)
         self.connectToHost(localport, port, bindPort)
         self.connect.send(getHeaders)
 
-        while True:    
+        while True:
             envelope = NetworkEnvelope.parse(self.stream)
+            print(envelope.command)
             if envelope.command == b"Finished":
                 blockObj = FinishedSending.parse(envelope.stream())
                 print(f"All Blocks Received")
@@ -174,25 +174,23 @@ class syncManager:
             if envelope.command == b'block':
                 blockObj = Block.parse(envelope.stream())
                 BlockHeaderObj = BlockHeader(blockObj.BlockHeader.version,
-                            blockObj.BlockHeader.prevBlockHash, 
-                            blockObj.BlockHeader.merkleRoot, 
-                            blockObj.BlockHeader.timestamp,
-                            blockObj.BlockHeader.bits,
-                            blockObj.BlockHeader.nonce)
-                
+                                             blockObj.BlockHeader.prevBlockHash,
+                                             blockObj.BlockHeader.merkleRoot,
+                                             blockObj.BlockHeader.timestamp,
+                                             blockObj.BlockHeader.bits,
+                                             blockObj.BlockHeader.nonce)
                 if BlockHeaderObj.validateBlock():
                     for idx, tx in enumerate(blockObj.Txs):
                         tx.TxId = tx.id()
                         blockObj.Txs[idx] = tx.to_dict()
-                
+
                     BlockHeaderObj.blockHash = BlockHeaderObj.generateBlockHash()
                     BlockHeaderObj.prevBlockHash = BlockHeaderObj.prevBlockHash.hex()
                     BlockHeaderObj.merkleRoot = BlockHeaderObj.merkleRoot.hex()
-                    BlockHeaderObj.nonce =  little_endian_to_int(BlockHeaderObj.nonce)
+                    BlockHeaderObj.nonce = little_endian_to_int(BlockHeaderObj.nonce)
                     BlockHeaderObj.bits = BlockHeaderObj.bits.hex()
                     blockObj.BlockHeader = BlockHeaderObj
                     BlockchainDB().write([blockObj.to_dict()])
                     print(f"Block Received - {blockObj.Height}")
                 else:
-                    self.secondryChain[BlockHeaderObj.generateBlockHash()] = blockObj
-                
+                    self.secondaryChain[BlockHeaderObj.generateBlockHash()] = blockObj
