@@ -50,7 +50,7 @@ class Block:
                     bytes.fromhex(lastblock['BlockHeader']['prevBlockHash']),
                     bytes.fromhex(lastblock['BlockHeader']['merkleRoot']),
                     lastblock['BlockHeader']['timestamp'],
-                    bytes.fromhex(lastblock['BlockHeader']['difficulty']))
+                    lastblock['BlockHeader']['difficulty'])
         
         block.nonce = int_to_little_endian(lastblock['BlockHeader']['nonce'], 4)
 

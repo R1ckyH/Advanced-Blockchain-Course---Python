@@ -31,7 +31,7 @@ class BlockHeader:
         prevBlockHash = s.read(32)[::-1]
         merkleRoot = s.read(32)[::-1]
         timestamp = little_endian_to_int(s.read(4))
-        difficulty = little_endian_to_int(s.read(4))
+        difficulty = s.read(4)
         nonce = s.read(4)
         return cls(version, prevBlockHash, merkleRoot, timestamp, difficulty, nonce)
 
@@ -40,14 +40,14 @@ class BlockHeader:
         result += self.prevBlockHash[::-1]
         result += self.merkleRoot[::-1]
         result += int_to_little_endian(self.timestamp, 4)
-        result += int_to_little_endian(self.difficulty, 4)
+        result += self.difficulty
         result += self.nonce
         return result
 
     def to_hex(self):
-        self.difficulty = little_endian_to_int(self.difficulty)
         self.blockHash = self.generateBlockHash()
         self.nonce = little_endian_to_int(self.nonce)
+        self.difficulty = little_endian_to_int(self.difficulty)
         self.prevBlockHash = self.prevBlockHash.hex()
         self.merkleRoot = self.merkleRoot.hex()
 
@@ -91,7 +91,7 @@ class BlockHeader:
     def check_pow(self):
         sha = hash256(self.serialize())
         proof = little_endian_to_int(sha)
-        return proof < difficulty_to_target(self.difficulty)
+        return proof < difficulty_to_target(little_endian_to_int(self.difficulty))
 
     def generateBlockHash(self):
         sha = hash256(self.serialize())

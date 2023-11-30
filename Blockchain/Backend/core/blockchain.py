@@ -11,7 +11,7 @@ import copy
 import configparser
 from Blockchain.Backend.core.block import Block
 from Blockchain.Backend.core.blockheader import BlockHeader
-from Blockchain.Backend.util.util import hash256, merkle_root, target_to_bits, bits_to_target, difficulty_to_target, target_to_difficulty
+from Blockchain.Backend.util.util import hash256, merkle_root, target_to_bits, bits_to_target, difficulty_to_target, target_to_difficulty, little_endian_to_int
 from Blockchain.Backend.core.database.database import BlockchainDB, NodeDB
 from Blockchain.Backend.core.Tx import CoinbaseTx, Tx
 from multiprocessing import Process, Manager
@@ -215,8 +215,8 @@ class Blockchain:
         return difficulty, timestamp
 
     def adjustTargetDifficulty(self, BlockHeight):
-        if BlockHeight % RESET_DIFFICULTY_AFTER_BLOCKS == 0 and BlockHeight != 0:
-            difficulty, timestamp = self.getTargetDifficultyAndTimestamp(BlockHeight - RESET_DIFFICULTY_AFTER_BLOCKS)
+        if BlockHeight % RESET_DIFFICULTY_AFTER_BLOCKS == 0 and BlockHeight < 2:
+            difficulty, timestamp = self.getTargetDifficultyAndTimestamp(BlockHeight - RESET_DIFFICULTY_AFTER_BLOCKS - 1)
             Lastdifficulty, lastTimestamp = self.getTargetDifficultyAndTimestamp()
 
             lastTarget = difficulty_to_target(difficulty)

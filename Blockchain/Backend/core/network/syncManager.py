@@ -60,6 +60,8 @@ class syncManager:
         except Exception as e:
             self.conn.close()
             print(f" Error while processing the client request \n {e}")
+            import traceback
+            print(traceback.format_exc())
 
     def addNode(self):
         nodeDb = NodeDB()
@@ -70,13 +72,14 @@ class syncManager:
 
     def sendBlockToRequestor(self, start_block):
         blocksToSend = self.fetchBlocksFromBlockchain(start_block)
-
         try:
             self.sendBlock(blocksToSend)
             self.sendSecondryChain()
             self.sendPortlist()
             self.sendFinishedMessage()
         except Exception as e:
+            import traceback
+            print(traceback.format_exc())
             print(f"Unable to send the blocks \n {e}")
 
     def sendPortlist(self):
@@ -112,7 +115,8 @@ class syncManager:
         blocksToSend = []
         blockchain = BlockchainDB()
         blocks = blockchain.read()
-
+        if fromBlocksOnwards == "0" * 64:
+            fromBlocksOnwards = blocks[0]['BlockHeader']['blockHash']
         foundBlock = False
         for block in blocks:
             if block['BlockHeader']['blockHash'] == fromBlocksOnwards:
@@ -142,10 +146,11 @@ class syncManager:
         self.connect.send(Tx)
 
     def startDownload(self, localport, port, bindPort):
+        print("download")
         lastBlock = BlockchainDB().lastBlock()
 
         if not lastBlock:
-            lastBlockHeader = "0000bbe173a3c36eabec25b0574bf7b055db9861b07f9ee10ad796eb06428b9b"
+            lastBlockHeader = "0" * 64
         else:
             lastBlockHeader = lastBlock['BlockHeader']['blockHash']
 
@@ -180,7 +185,6 @@ class syncManager:
                                              blockObj.BlockHeader.timestamp,
                                              blockObj.BlockHeader.difficulty,
                                              blockObj.BlockHeader.nonce)
-
                 if BlockHeaderObj.validateBlock():
                     for idx, tx in enumerate(blockObj.Txs):
                         tx.TxId = tx.id()
@@ -190,6 +194,7 @@ class syncManager:
                     BlockHeaderObj.prevBlockHash = BlockHeaderObj.prevBlockHash.hex()
                     BlockHeaderObj.merkleRoot = BlockHeaderObj.merkleRoot.hex()
                     BlockHeaderObj.nonce = little_endian_to_int(BlockHeaderObj.nonce)
+                    BlockHeaderObj.difficulty = little_endian_to_int(BlockHeaderObj.difficulty)
                     blockObj.BlockHeader = BlockHeaderObj
                     BlockchainDB().write([blockObj.to_dict()])
                     print(f"Block Received - {blockObj.Height}")
