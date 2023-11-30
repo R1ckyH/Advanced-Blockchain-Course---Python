@@ -10,7 +10,8 @@ from Blockchain.Backend.util.util import (
     int_to_little_endian,
     little_endian_to_int,
     int_to_little_endian,
-    bits_to_target
+    bits_to_target,
+    difficulty_to_target
 )
 
 
@@ -30,7 +31,7 @@ class BlockHeader:
         prevBlockHash = s.read(32)[::-1]
         merkleRoot = s.read(32)[::-1]
         timestamp = little_endian_to_int(s.read(4))
-        difficulty = s.read(4)
+        difficulty = little_endian_to_int(s.read(4))
         nonce = s.read(4)
         return cls(version, prevBlockHash, merkleRoot, timestamp, difficulty, nonce)
 
@@ -44,18 +45,18 @@ class BlockHeader:
         return result
 
     def to_hex(self):
+        self.difficulty = little_endian_to_int(self.difficulty)
         self.blockHash = self.generateBlockHash()
         self.nonce = little_endian_to_int(self.nonce)
         self.prevBlockHash = self.prevBlockHash.hex()
         self.merkleRoot = self.merkleRoot.hex()
-        self.difficulty = self.difficulty
 
     def to_bytes(self):
         self.nonce = int_to_little_endian(self.nonce, 4)
         self.prevBlockHash = bytes.fromhex(self.prevBlockHash)
         self.merkleRoot = bytes.fromhex(self.merkleRoot)
         self.blockHash = bytes.fromhex(self.blockHash)
-        self.difficulty = self.difficulty
+        self.difficulty = int_to_little_endian(self.difficulty, 4)
 
     def mine(self, target, newBlockAvailable):
         self.blockHash = target + 1
@@ -83,14 +84,14 @@ class BlockHeader:
     def validateBlock(self):
         lastBlock = BlockchainDB().lastBlock()
 
-        if self.prevBlockHash.hex() == lastBlock['BlockHeader']['blockHash']:
+        if lastBlock is None or self.prevBlockHash.hex() == lastBlock['BlockHeader']['blockHash']:
             if self.check_pow():
                 return True
 
     def check_pow(self):
         sha = hash256(self.serialize())
         proof = little_endian_to_int(sha)
-        return proof < bits_to_target(self.bits)
+        return proof < difficulty_to_target(self.difficulty)
 
     def generateBlockHash(self):
         sha = hash256(self.serialize())
