@@ -43,7 +43,7 @@ body {
   height: 8em;
   width: 8em;
   background: inherit;
-  margin-left: 1em;
+  margin-left: 5%;
 }
 
 section ul {
@@ -56,7 +56,8 @@ section li a {
   color: white;
   font-size: 1.3em;
   text-align: center;
-  margin-left: 1.5em;
+  margin-left: 2%;
+  margin-top: 1em;
   padding: 0.8em 0.8em;
   text-decoration: none;
 }
@@ -76,7 +77,7 @@ section li .active {
 }
 
 .search-container {
-  margin-top: 0.5em;
+  margin-top: 1em;
   margin-right: 3em;
   float: right;
 }
@@ -88,11 +89,12 @@ section li .active {
   font-size: 1em;
   border: none;
   color: whitesmoke;
+  border-radius: 2cm;
   /* background-image: linear-gradient(to right, rgba(230,85,237,255),rgba(254,238,148,255)); */
   background-image: linear-gradient(
     to right,
-    rgb(0, 89, 255),
-    rgb(225, 0, 255)
+    rgb(0, 65, 185),
+    rgb(0, 201, 90)
   );
 }
 
@@ -122,12 +124,12 @@ section li .active {
 }
 
 .mainText > h1 {
-  position: absolute;
+  position: relative;
   text-align: center;
-  margin-left: 3.5em;
   font-size: 7em;
   top: 30%;
   color: whitesmoke;
+  text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
 
   /* background: linear-gradient(to bottom, rgba(231,84,237,255)    , rgba(255,239,148,255)    );
     -webkit-background-clip: text;
@@ -135,12 +137,11 @@ section li .active {
 }
 
 .mainText > h2 {
-  position: absolute;
+  position: relative;
   text-align: center;
-  margin-left: 3em;
-  margin-right: 1em;
   font-size: 3em;
-  top: 50%;
+  top: 55%;
+  text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 /* Style Sheet for Block html */
@@ -149,8 +150,8 @@ section li .active {
   grid-template-columns: auto;
   background-image: linear-gradient(
     to right,
-    rgb(0, 89, 255),
-    rgb(225, 0, 255)
+    rgb(0, 65, 185),
+    rgb(0, 201, 90)
   );
   /* background-color:rgb(204, 0, 255); */
   margin: 8em 5em 0em 5em;
@@ -204,7 +205,7 @@ section li .active {
 .grid-container #detail:hover {
   /* background-color: rgb(64, 224, 163); */
   /* background-color: rgba(254,120,150,230); */
-  background-color: rgb(225, 0, 255);
+  background-color: rgba(0, 0, 0, 0.5);
   border-radius: 4em;
 }
 
@@ -238,8 +239,8 @@ section li .active {
   grid-template-columns: auto;
   background-image: linear-gradient(
     to right,
-    rgb(0, 89, 255),
-    rgb(225, 0, 255)
+    rgb(0, 65, 185),
+    rgb(0, 201, 90)
   );
   margin: 8em 5em 0em 5em;
   border-radius: 1em;
@@ -272,7 +273,7 @@ section li .active {
 
 .grid-container1 #detail:hover {
   /* background-color: rgb(64, 224, 163); */
-  background-color: rgb(225, 0, 255);
+  background-color: rgba(0, 0, 0, 0.5);
   border-radius: 4em;
 }
 
@@ -335,8 +336,8 @@ section li .active {
   grid-template-columns: 20em 1fr;
   background-image: linear-gradient(
     to right,
-    rgb(0, 89, 255),
-    rgb(225, 0, 255)
+    rgb(0, 65, 185),
+    rgb(0, 201, 90)
   );
   margin: 1em 5em 0em 5em;
   padding: 1em;
@@ -381,8 +382,8 @@ section li .active {
   grid-template-columns: 1fr 1fr;
   background-image: linear-gradient(
     to right,
-    rgb(0, 89, 255),
-    rgb(225, 0, 255)
+    rgb(0, 65, 185),
+    rgb(0, 201, 90)
   );
   margin: 1em 5em 0em 5em;
   border-radius: 1em;
@@ -413,8 +414,9 @@ section li .active {
 .TxInput {
   background-image: linear-gradient(
     to right,
-    rgb(255, 0, 221),
-    rgb(143, 143, 143)
+    rgb(0, 201, 90)
+    rgb(0, 65, 185),
+    
   );
   border-radius: 1em;
   margin-top: 1em;
@@ -426,8 +428,8 @@ section li .active {
 .Txoutput {
   background-image: linear-gradient(
     to right,
-    rgb(255, 0, 221),
-    rgb(76, 0, 255)
+    rgb(0, 201, 90)
+    rgb(0, 65, 185),
   );
   padding: 1em;
   margin-top: 1em;
@@ -457,8 +459,8 @@ section li .active {
 .wallet-container {
   background-image: linear-gradient(
     to right,
-    rgb(0, 89, 255),
-    rgb(225, 0, 255)
+    rgb(0, 65, 185),
+    rgb(0, 201, 90)
   );
   margin: 8em 5em 0em 5em;
   border-radius: 1em;
@@ -487,8 +489,8 @@ section li .active {
 #form input {
   background-image: linear-gradient(
     to right,
-    rgb(255, 0, 221),
-    rgb(76, 0, 255)
+    rgb(0, 201, 90)
+    rgb(0, 65, 185),
   );
   border-radius: 1em;
   padding: 1em;
@@ -503,9 +505,10 @@ section li .active {
   width: 20vw;
   background-image: linear-gradient(
     to right,
-    rgb(0, 255, 234),
-    rgb(255, 0, 221)
+    rgb(0, 201, 90)
+    rgb(0, 65, 185),
   );
   margin-left: 25em;
   font-size: 1em;
+  color: black;
 }
