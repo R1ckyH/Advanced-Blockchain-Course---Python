@@ -190,7 +190,6 @@ class syncManager:
                     BlockHeaderObj.prevBlockHash = BlockHeaderObj.prevBlockHash.hex()
                     BlockHeaderObj.merkleRoot = BlockHeaderObj.merkleRoot.hex()
                     BlockHeaderObj.nonce = little_endian_to_int(BlockHeaderObj.nonce)
-                    BlockHeaderObj.difficulty = BlockHeaderObj.difficulty.hex()
                     blockObj.BlockHeader = BlockHeaderObj
                     BlockchainDB().write([blockObj.to_dict()])
                     print(f"Block Received - {blockObj.Height}")
