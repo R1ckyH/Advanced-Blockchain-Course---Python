@@ -45,7 +45,7 @@ class syncManager:
                                              blockObj.BlockHeader.prevBlockHash,
                                              blockObj.BlockHeader.merkleRoot,
                                              blockObj.BlockHeader.timestamp,
-                                             blockObj.BlockHeader.bits,
+                                             blockObj.BlockHeader.difficulty,
                                              blockObj.BlockHeader.nonce)
 
                 self.newBlockAvailable[BlockHeaderObj.generateBlockHash()] = blockObj
@@ -178,7 +178,7 @@ class syncManager:
                                              blockObj.BlockHeader.prevBlockHash,
                                              blockObj.BlockHeader.merkleRoot,
                                              blockObj.BlockHeader.timestamp,
-                                             blockObj.BlockHeader.bits,
+                                             blockObj.BlockHeader.difficulty,
                                              blockObj.BlockHeader.nonce)
 
                 if BlockHeaderObj.validateBlock():
@@ -190,7 +190,7 @@ class syncManager:
                     BlockHeaderObj.prevBlockHash = BlockHeaderObj.prevBlockHash.hex()
                     BlockHeaderObj.merkleRoot = BlockHeaderObj.merkleRoot.hex()
                     BlockHeaderObj.nonce = little_endian_to_int(BlockHeaderObj.nonce)
-                    BlockHeaderObj.bits = BlockHeaderObj.bits.hex()
+                    BlockHeaderObj.difficulty = BlockHeaderObj.difficulty.hex()
                     blockObj.BlockHeader = BlockHeaderObj
                     BlockchainDB().write([blockObj.to_dict()])
                     print(f"Block Received - {blockObj.Height}")

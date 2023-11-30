@@ -11,7 +11,7 @@ content%}
     <div class="TxItem TotalTxs">Total Transactions</div>
     <div class="TxItem BlockSize">Block Size</div>
     <div class="TxItem MerkleRoot">Merkle Root</div>
-    <div class="TxItem Target">Target (Bits)</div>
+    <div class="TxItem Target">Target (difficulty)</div>
     <div class="TxItem Nonce">Nonce</div>
     <div class="TxItem Timestamp">Timestamp</div>
   </div>
@@ -37,7 +37,7 @@ content%}
     <div class="TxItemDetail MerkleRoot">
       {{block['BlockHeader']['merkleRoot']}}
     </div>
-    <div class="TxItemDetail Target">{{block['BlockHeader']['bits']}}</div>
+    <div class="TxItemDetail Target">{{block['BlockHeader']['difficulty']}}</div>
     <div class="TxItemDetail Nonce">{{block['BlockHeader']['nonce']}}</div>
     <div class="TxItemDetail Timestamp">
       {{block['BlockHeader']['timestamp']}}

@@ -5,6 +5,7 @@ Any violations may lead to legal action
 """
 import os
 import json
+import time
 
 
 class BaseDB:
@@ -52,7 +53,7 @@ class BlockchainDB(BaseDB):
         if data:
             return data[-1]
         else:
-            return {"BlockHeader": {"blockHash": "0000bbe173a3c36eabec25b0574bf7b055db9861b07f9ee10ad796eb06428b9b"}}
+            return None
 
 
 class AccountDB(BaseDB):

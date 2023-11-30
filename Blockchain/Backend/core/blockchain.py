@@ -43,7 +43,7 @@ class Blockchain:
         self.newBlockAvailable = newBlockAvailable
         self.secondryChain = secondryChain
         self.current_target = INITIAL_TARGET
-        self.bits = target_to_bits(INITIAL_TARGET)
+        self.difficulty = target_to_bits(INITIAL_TARGET)
 
     def write_on_disk(self, block):
         blockchainDB = BlockchainDB()
@@ -130,7 +130,6 @@ class Blockchain:
         deleteTxs = []
 
         tempMemPool = dict(self.MemPool)
-
         if self.Blocksize < 1000000:
             for tx in tempMemPool:
                 if not self.doubleSpendingAttempt(tempMemPool[tx]):
@@ -183,11 +182,10 @@ class Blockchain:
         for block in blocks:
             for tx in block['Txs']:
                 allTxs[tx['TxId']] = tx
-
         for block in blocks:
             for tx in block['Txs']:
                 for txin in tx['tx_ins']:
-                    if txin['prev_tx'] != "0000000000000000000000000000000000000000000000000000000000000000":
+                    if txin['prev_tx'] != ZERO_HASH:
                         if len(allTxs[txin['prev_tx']]['tx_outs']) < 2:
                             del allTxs[txin['prev_tx']]
                         else:
@@ -198,36 +196,37 @@ class Blockchain:
             self.utxos[tx] = Tx.to_obj(allTxs[tx])
 
     def settargetWhileBooting(self):
-        bits, timestamp = self.getTargetDifficultyAndTimestamp()
-        self.bits = bytes.fromhex(bits)
-        self.current_target = bits_to_target(self.bits)
+        difficulty, timestamp = self.getTargetDifficultyAndTimestamp()
+        self.difficulty = bytes.fromhex(difficulty)
+        self.current_target = bits_to_target(self.difficulty)
 
     def getTargetDifficultyAndTimestamp(self, BlockHeight=None):
-        if BlockHeight:
+        if BlockHeight is not None:
             blocks = BlockchainDB().read()
-            bits = blocks[BlockHeight]['BlockHeader']['bits']
+            difficulty = blocks[BlockHeight]['BlockHeader']['difficulty']
             timestamp = blocks[BlockHeight]['BlockHeader']['timestamp']
         else:
             block = BlockchainDB().lastBlock()
-            bits = block['BlockHeader']['bits']
+            if block is None:
+                return "ffff001f", int(time.time())
+            difficulty = block['BlockHeader']['difficulty']
             timestamp = block['BlockHeader']['timestamp']
-        return bits, timestamp
+        return difficulty, timestamp
 
     def adjustTargetDifficulty(self, BlockHeight):
-        if BlockHeight % 10 == 0:
-            bits, timestamp = self.getTargetDifficultyAndTimestamp(BlockHeight - 10)
-            Lastbits, lastTimestamp = self.getTargetDifficultyAndTimestamp()
+        if BlockHeight % 10 == 0 and BlockHeight != 0:
+            difficulty, timestamp = self.getTargetDifficultyAndTimestamp(BlockHeight - 10)
+            Lastdifficulty, lastTimestamp = self.getTargetDifficultyAndTimestamp()
 
-            lastTarget = bits_to_target(bytes.fromhex(bits))
+            lastTarget = bits_to_target(bytes.fromhex(difficulty))
             AverageBlockMineTime = lastTimestamp - timestamp
             timeRatio = AverageBlockMineTime / AVERAGE_MINE_TIME
-
             NEW_TARGET = int(format(int(lastTarget * timeRatio)))
 
             if NEW_TARGET > MAX_TARGET:
                 NEW_TARGET = MAX_TARGET
 
-            self.bits = target_to_bits(NEW_TARGET)
+            self.difficulty = target_to_bits(NEW_TARGET)
             self.current_target = NEW_TARGET
 
     def BroadcastBlock(self, block, local_port, local_host):
@@ -245,7 +244,7 @@ class Blockchain:
                                          block.BlockHeader.prevBlockHash,
                                          block.BlockHeader.merkleRoot,
                                          block.BlockHeader.timestamp,
-                                         block.BlockHeader.bits,
+                                         block.BlockHeader.difficulty,
                                          block.BlockHeader.nonce)
 
             if BlockHeaderObj.validateBlock():
@@ -338,7 +337,7 @@ class Blockchain:
         coinbaseTx = coinbaseInstance.CoinbaseTransaction()
         self.Blocksize += len(coinbaseTx.serialize())
 
-        coinbaseTx.tx_outs[0].amount = coinbaseTx.tx_outs[0].amount + self.fee
+        coinbaseTx.tx_outs[0].amount += self.fee
 
         self.TxIds.insert(0, bytes.fromhex(coinbaseTx.id()))
         self.addTransactionsInBlock.insert(0, coinbaseTx)
@@ -346,10 +345,9 @@ class Blockchain:
         merkleRoot = merkle_root(self.TxIds)[::-1].hex()
         self.adjustTargetDifficulty(BlockHeight)
         blockheader = BlockHeader(
-            VERSION, prevBlockHash, merkleRoot, timestamp, self.bits, nonce=0
+            VERSION, prevBlockHash, merkleRoot, timestamp, self.difficulty, nonce=0
         )
         competitionOver = blockheader.mine(self.current_target, self.newBlockAvailable)
-
         if competitionOver:
             self.LostCompetition()
         else:
