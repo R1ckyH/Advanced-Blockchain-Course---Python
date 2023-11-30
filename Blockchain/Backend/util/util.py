@@ -21,6 +21,14 @@ def hash160(s):
     return RIPEMD160.new(sha256(s).digest()).digest()
 
 
+def difficulty_to_target(bit):
+    return 2 ** (256 - bit)
+
+
+def target_to_difficulty(target):
+    return int(256 - log(target, 2))
+
+
 def bytes_needed(n):
     if n == 0:
         return 1

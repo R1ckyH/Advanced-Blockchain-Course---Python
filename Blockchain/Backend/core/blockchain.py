@@ -11,7 +11,7 @@ import copy
 import configparser
 from Blockchain.Backend.core.block import Block
 from Blockchain.Backend.core.blockheader import BlockHeader
-from Blockchain.Backend.util.util import hash256, merkle_root, target_to_bits, bits_to_target
+from Blockchain.Backend.util.util import hash256, merkle_root, target_to_bits, bits_to_target, difficulty_to_target
 from Blockchain.Backend.core.database.database import BlockchainDB, NodeDB
 from Blockchain.Backend.core.Tx import CoinbaseTx, Tx
 from multiprocessing import Process, Manager
@@ -22,6 +22,7 @@ import time
 
 ZERO_HASH = "0" * 64
 VERSION = 1
+INITIAL_DIFFICULTY = 16
 INITIAL_TARGET = 0x0000FFFF00000000000000000000000000000000000000000000000000000000
 MAX_TARGET = 0x0000ffff00000000000000000000000000000000000000000000000000000000
 localHostPort = None
@@ -42,8 +43,8 @@ class Blockchain:
         self.MemPool = MemPool
         self.newBlockAvailable = newBlockAvailable
         self.secondryChain = secondryChain
-        self.current_target = INITIAL_TARGET
-        self.difficulty = target_to_bits(INITIAL_TARGET)
+        self.difficulty = INITIAL_DIFFICULTY
+        self.current_target = difficulty_to_target(INITIAL_DIFFICULTY)
 
     def write_on_disk(self, block):
         blockchainDB = BlockchainDB()
@@ -197,8 +198,8 @@ class Blockchain:
 
     def settargetWhileBooting(self):
         difficulty, timestamp = self.getTargetDifficultyAndTimestamp()
-        self.difficulty = bytes.fromhex(difficulty)
-        self.current_target = bits_to_target(self.difficulty)
+        self.difficulty = difficulty
+        self.current_target = difficulty_to_target(self.difficulty)
 
     def getTargetDifficultyAndTimestamp(self, BlockHeight=None):
         if BlockHeight is not None:
@@ -208,17 +209,17 @@ class Blockchain:
         else:
             block = BlockchainDB().lastBlock()
             if block is None:
-                return "ffff001f", int(time.time())
+                return INITIAL_DIFFICULTY, int(time.time())
             difficulty = block['BlockHeader']['difficulty']
             timestamp = block['BlockHeader']['timestamp']
         return difficulty, timestamp
 
     def adjustTargetDifficulty(self, BlockHeight):
         if BlockHeight % 10 == 0 and BlockHeight != 0:
-            difficulty, timestamp = self.getTargetDifficultyAndTimestamp(BlockHeight - 10)
+            difficulty, timestamp = self.getTargetDifficultyAndTimestamp(BlockHeight - 1)
             Lastdifficulty, lastTimestamp = self.getTargetDifficultyAndTimestamp()
 
-            lastTarget = bits_to_target(bytes.fromhex(difficulty))
+            lastTarget = difficulty_to_target(difficulty)
             AverageBlockMineTime = lastTimestamp - timestamp
             timeRatio = AverageBlockMineTime / AVERAGE_MINE_TIME
             NEW_TARGET = int(format(int(lastTarget * timeRatio)))
@@ -226,7 +227,7 @@ class Blockchain:
             if NEW_TARGET > MAX_TARGET:
                 NEW_TARGET = MAX_TARGET
 
-            self.difficulty = target_to_bits(NEW_TARGET)
+            self.difficulty = difficulty_to_target(NEW_TARGET)
             self.current_target = NEW_TARGET
 
     def BroadcastBlock(self, block, local_port, local_host):
