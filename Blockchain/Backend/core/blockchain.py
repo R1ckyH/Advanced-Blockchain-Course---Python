@@ -105,8 +105,10 @@ class Blockchain:
                     print(f" Spent Transaction removed {txId_index[0].hex()} ")
                     del self.utxos[txId_index[0].hex()]
                 else:
-                    prev_trans = self.utxos[txId_index[0].hex()]
-                    prev_trans.tx_outs.pop(txId_index[1])
+                    tx_outs = self.utxos[txId_index[0].hex()].tx_outs
+                    tx_outs.pop(txId_index[1])
+                    self.utxos[txId_index[0].hex()].tx_outs = tx_outs
+
 
     """ Check if it is a double spending Attempt """
 
