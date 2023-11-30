@@ -215,8 +215,8 @@ class Blockchain:
         return difficulty, timestamp
 
     def adjustTargetDifficulty(self, BlockHeight):
-        if BlockHeight % RESET_DIFFICULTY_AFTER_BLOCKS == 0 and BlockHeight < 2:
-            difficulty, timestamp = self.getTargetDifficultyAndTimestamp(BlockHeight - RESET_DIFFICULTY_AFTER_BLOCKS - 1)
+        if BlockHeight % RESET_DIFFICULTY_AFTER_BLOCKS == 0 and BlockHeight > 0:
+            difficulty, timestamp = self.getTargetDifficultyAndTimestamp(BlockHeight - RESET_DIFFICULTY_AFTER_BLOCKS)
             Lastdifficulty, lastTimestamp = self.getTargetDifficultyAndTimestamp()
 
             lastTarget = difficulty_to_target(difficulty)
