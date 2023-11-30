@@ -39,7 +39,7 @@ class BlockHeader:
         result += self.prevBlockHash[::-1]
         result += self.merkleRoot[::-1]
         result += int_to_little_endian(self.timestamp, 4)
-        result += self.difficulty
+        result += int_to_little_endian(self.difficulty, 4)
         result += self.nonce
         return result
 
@@ -48,14 +48,14 @@ class BlockHeader:
         self.nonce = little_endian_to_int(self.nonce)
         self.prevBlockHash = self.prevBlockHash.hex()
         self.merkleRoot = self.merkleRoot.hex()
-        self.difficulty = self.difficulty.hex()
+        self.difficulty = self.difficulty
 
     def to_bytes(self):
         self.nonce = int_to_little_endian(self.nonce, 4)
         self.prevBlockHash = bytes.fromhex(self.prevBlockHash)
         self.merkleRoot = bytes.fromhex(self.merkleRoot)
         self.blockHash = bytes.fromhex(self.blockHash)
-        self.difficulty = bytes.fromhex(self.difficulty)
+        self.difficulty = self.difficulty
 
     def mine(self, target, newBlockAvailable):
         self.blockHash = target + 1
@@ -72,13 +72,12 @@ class BlockHeader:
                     + bytes.fromhex(self.prevBlockHash)[::-1]
                     + bytes.fromhex(self.merkleRoot)[::-1]
                     + int_to_little_endian(self.timestamp, 4)
-                    + self.difficulty
+                    + int_to_little_endian(self.difficulty, 4)
                     + int_to_little_endian(self.nonce, 4)
                 )
             )
             print(f"Mining Started {self.nonce}", end="\r")
         self.blockHash = int_to_little_endian(self.blockHash, 32).hex()[::-1]
-        self.difficulty = self.difficulty.hex()
         return competitionOver
 
     def validateBlock(self):

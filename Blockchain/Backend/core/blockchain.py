@@ -11,7 +11,7 @@ import copy
 import configparser
 from Blockchain.Backend.core.block import Block
 from Blockchain.Backend.core.blockheader import BlockHeader
-from Blockchain.Backend.util.util import hash256, merkle_root, target_to_bits, bits_to_target, difficulty_to_target
+from Blockchain.Backend.util.util import hash256, merkle_root, target_to_bits, bits_to_target, difficulty_to_target, target_to_difficulty
 from Blockchain.Backend.core.database.database import BlockchainDB, NodeDB
 from Blockchain.Backend.core.Tx import CoinbaseTx, Tx
 from multiprocessing import Process, Manager
@@ -22,7 +22,7 @@ import time
 
 ZERO_HASH = "0" * 64
 VERSION = 1
-INITIAL_DIFFICULTY = 16
+INITIAL_DIFFICULTY = 17
 INITIAL_TARGET = 0x0000FFFF00000000000000000000000000000000000000000000000000000000
 MAX_TARGET = 0x0000ffff00000000000000000000000000000000000000000000000000000000
 localHostPort = None
@@ -33,7 +33,7 @@ localHost = None
 # Reset Block Difficulty after every 10 Blocks
 """
 AVERAGE_BLOCK_MINE_TIME = 20
-RESET_DIFFICULTY_AFTER_BLOCKS = 10
+RESET_DIFFICULTY_AFTER_BLOCKS = 2
 AVERAGE_MINE_TIME = AVERAGE_BLOCK_MINE_TIME * RESET_DIFFICULTY_AFTER_BLOCKS
 
 
@@ -215,8 +215,8 @@ class Blockchain:
         return difficulty, timestamp
 
     def adjustTargetDifficulty(self, BlockHeight):
-        if BlockHeight % 10 == 0 and BlockHeight != 0:
-            difficulty, timestamp = self.getTargetDifficultyAndTimestamp(BlockHeight - 1)
+        if BlockHeight % RESET_DIFFICULTY_AFTER_BLOCKS == 0 and BlockHeight != 0:
+            difficulty, timestamp = self.getTargetDifficultyAndTimestamp(BlockHeight - RESET_DIFFICULTY_AFTER_BLOCKS)
             Lastdifficulty, lastTimestamp = self.getTargetDifficultyAndTimestamp()
 
             lastTarget = difficulty_to_target(difficulty)
@@ -226,8 +226,7 @@ class Blockchain:
 
             if NEW_TARGET > MAX_TARGET:
                 NEW_TARGET = MAX_TARGET
-
-            self.difficulty = difficulty_to_target(NEW_TARGET)
+            self.difficulty = target_to_difficulty(NEW_TARGET)
             self.current_target = NEW_TARGET
 
     def BroadcastBlock(self, block, local_port, local_host):
