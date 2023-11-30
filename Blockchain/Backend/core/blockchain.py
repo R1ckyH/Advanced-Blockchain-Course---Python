@@ -106,9 +106,7 @@ class Blockchain:
                     del self.utxos[txId_index[0].hex()]
                 else:
                     prev_trans = self.utxos[txId_index[0].hex()]
-                    self.utxos[txId_index[0].hex()] = prev_trans.tx_outs.pop(
-                        txId_index[1]
-                    )
+                    prev_trans.tx_outs.pop(txId_index[1])
 
     """ Check if it is a double spending Attempt """
 
@@ -185,7 +183,7 @@ class Blockchain:
         for block in blocks:
             for tx in block['Txs']:
                 for txin in tx['tx_ins']:
-                    if txin['prev_tx'] != ZERO_HASH:
+                    if txin['prev_tx'] != ZERO_HASH and txin['prev_tx'] in allTxs:
                         if len(allTxs[txin['prev_tx']]['tx_outs']) < 2:
                             del allTxs[txin['prev_tx']]
                         else:
