@@ -157,12 +157,11 @@ def address(publicAddress):
         
         amount = 0
         AccountUtxos = []
-
         for TxId in AllUtxos:
-           for tx_out in AllUtxos[TxId].tx_outs:
-            if tx_out.script_pubkey.cmds[2] == h160.hex():
-                amount += tx_out.amount
-                AccountUtxos.append(AllUtxos[TxId])
+            for tx_out in AllUtxos[TxId].tx_outs:
+                if tx_out.script_pubkey.cmds[2].hex() == h160.hex():
+                    amount += tx_out.amount
+                    AccountUtxos.append(AllUtxos[TxId])
         
         return render_template('address.html', Txs = AccountUtxos, amount = amount,
         encode_base58 = encode_base58, bytes = bytes, sha256 = sha256, main_prefix = main_prefix, 
