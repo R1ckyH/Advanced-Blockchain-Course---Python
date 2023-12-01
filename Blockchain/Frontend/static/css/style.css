@@ -512,3 +512,8 @@ section li .active {
   font-size: 1em;
   color: black;
 }
+
+.wallet-container input[type="text"],
+.wallet-container input[type="number"] {
+  color: black;
+}
