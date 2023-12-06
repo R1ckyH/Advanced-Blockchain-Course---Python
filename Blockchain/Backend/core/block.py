@@ -1,8 +1,4 @@
-""" 
-Copyright (c) 2021 Codiesalert.com
-These scripts should be used for commercial purpose without Codies Alert Permission
-Any violations may lead to legal action
-"""
+
 from Blockchain.Backend.core.blockheader import BlockHeader
 from Blockchain.Backend.core.Tx import Tx
 from Blockchain.Backend.util.util import (little_endian_to_int, int_to_little_endian, encode_varint, read_varint)

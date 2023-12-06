@@ -1,8 +1,4 @@
-""" 
-Copyright (c) 2021 Codiesalert.com
-These scripts should be used for commercial purpose without Codies Alert Permission
-Any violations may lead to legal action
-"""
+
 from Blockchain.Backend.util.util import decode_base58
 from Blockchain.Backend.core.Script import Script
 from Blockchain.Backend.core.Tx import TxIn, TxOut, Tx

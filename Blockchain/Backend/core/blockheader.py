@@ -1,8 +1,4 @@
-""" 
-Copyright (c) 2021 Codiesalert.com
-These scripts should be used for commercial purpose without Codies Alert Permission
-Any violations may lead to legal action
-"""
+
 import random
 from Blockchain.Backend.core.database.database import BlockchainDB
 from Blockchain.Backend.util.util import (

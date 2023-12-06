@@ -1,11 +1,7 @@
-""" 
-Copyright (c) 2021 Codiesalert.com
-These scripts should be used for commercial purpose without Codies Alert Permission
-Any violations may lead to legal action
-"""
+
 import sys
 
-sys.path.append("/Users/Vmaha/Desktop/Bitcoin")
+sys.path.append("/admin/Documents/idk/edu/PolyU/3/4142/Project/Advanced-Blockchain-Course---Python")
 
 import copy
 import configparser
