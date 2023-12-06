@@ -1,7 +1,9 @@
 
 import sys
+import os
 
-sys.path.append("/admin/Documents/idk/edu/PolyU/3/4142/Project/Bitcoin")
+if os.path.exists("../../../Blockchain"):
+    sys.path.append("../../../")
 
 import copy
 import configparser

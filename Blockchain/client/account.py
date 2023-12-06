@@ -1,7 +1,10 @@
 
 import sys
+import os
 
-sys.path.append("/Users/Vmaha/Desktop/Bitcoin")
+if os.path.exists("../../Blockchain"):
+    sys.path.append("../../")
+
 from Blockchain.Backend.core.EllepticCurve.EllepticCurve import Sha256Point
 from Blockchain.Backend.util.util import hash160, hash256
 from Blockchain.Backend.core.database.database import AccountDB
