@@ -15,7 +15,6 @@ from Blockchain.Backend.core.Tx import CoinbaseTx, Tx
 from multiprocessing import Process, Manager
 from Blockchain.Frontend.run import main
 from Blockchain.Backend.core.network.syncManager import syncManager
-from Blockchain.client.autoBroadcastTX import autoBroadcast
 import time
 
 ZERO_HASH = "0" * 64
@@ -411,10 +410,6 @@ if __name__ == "__main__":
         blockchain = Blockchain(utxos, MemPool, newBlockAvailable, secondryChain)
         blockchain.startSync()
         blockchain.buildUTXOS()
-
-        if simulateBTC:
-            autoBroadcastTxs = Process(target=autoBroadcast)
-            autoBroadcastTxs.start()
 
         blockchain.settargetWhileBooting()
 
